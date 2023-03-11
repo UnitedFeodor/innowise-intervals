@@ -1,11 +1,6 @@
 package com.innowise;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.*;
 
 public class Intervals {
 
@@ -24,19 +19,30 @@ public class Intervals {
             Map.entry("P8", new Integer[]{8, 12})
             );
 
-    // 1 to 7              C-G desc = P4      1-5      1+4 = 5  7-2 = 5
+
+    private final static String NOTE_C = "C";
+    private final static String NOTE_D = "D";
+    private final static String NOTE_E = "E";
+    private final static String NOTE_F = "F";
+    private final static String NOTE_G = "G";
+    private final static String NOTE_A = "A";
+    private final static String NOTE_B = "B";
+
+    private final static List<String> NOTE_ORDER_LIST =
+            Arrays.asList(NOTE_C,NOTE_D,NOTE_E,NOTE_F,NOTE_G,NOTE_A,NOTE_B);
     private final static Map<String,Integer> NOTE_SEMITONES_TO_NEXT_MAP = Map.ofEntries(
-            Map.entry("C",2),
-            Map.entry("D",2),
-            Map.entry("E",1),
-            Map.entry("F",2),
-            Map.entry("G",2),
-            Map.entry("A",2),
-            Map.entry("B",1)
+            Map.entry(NOTE_C,2),
+            Map.entry(NOTE_D,2),
+            Map.entry(NOTE_E,1),
+            Map.entry(NOTE_F,2),
+            Map.entry(NOTE_G,2),
+            Map.entry(NOTE_A,2),
+            Map.entry(NOTE_B,1)
     );
 
+    private final static String NO_ACCIDENTAL = "";
     private final static Map<String,Integer> ACCIDENTAL_SEMITONES_MAP = Map.ofEntries(
-            Map.entry("",0),
+            Map.entry(NO_ACCIDENTAL,0),
             Map.entry("#",1),
             Map.entry("b",-1),
             Map.entry("##",2),
@@ -44,6 +50,8 @@ public class Intervals {
     );
     private final static String ORDER_ASC = "asc";
     private final static String ORDER_DESC = "dsc";
+
+    private final static int TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT = 12;
 
 
     private final static String INVALID_PARAM_COUNT_EXCEPTION = "Illegal number of elements in input array";
@@ -86,11 +94,12 @@ public class Intervals {
             throw new IllegalArgumentException(INVALID_ORDER_PARAM_EXCEPTION);
         }
         // TODO if p8 then return res without calculations
-        int degreeCountToNextNote = getDegreeCountFromInterval(intervalName);
+        // -1 because an interval is inclusive of all its degrees
+        int degreeCountToNextNote = getDegreeCountFromInterval(intervalName) - 1;
         String secondNoteName = getNoteByDegreesToIt(firstNoteName,degreeCountToNextNote,intervalNoteOrder);
         
         int neededSemitoneCountToNextIntervalNote = getSemitoneCountFromInterval(intervalName);
-        int semitonesBetweenNaturalNotes = getSemitonesBetweenNotes(firstNoteName,secondNoteName,intervalNoteOrder);
+        int semitonesBetweenNaturalNotes = getSemitonesBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder);
 
         int firstNoteAccidentalSemitones = accidentalToSemitones(firstNoteAccidental);
         // TODO maybe abs in first difference
@@ -125,36 +134,111 @@ public class Intervals {
         return secondNoteWithAccidental; // TODO implement
     }
 
+    private static <T, E> T getKeyByValue(Map<T, E> map, E value) {
+        for (Map.Entry<T, E> entry : map.entrySet()) {
+            if (Objects.equals(value, entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
     private static String semitonesToAccidental(int semitoneDifference) {
-        return new String();  // TODO implement
+        return getKeyByValue(ACCIDENTAL_SEMITONES_MAP,semitoneDifference);  // TODO test
     }
 
     private static int accidentalToSemitones(String accidental) {
-        return 0;  // TODO implement
+        return ACCIDENTAL_SEMITONES_MAP.get(accidental);  // TODO test
     }
 
     private static String parseAccidental(String noteNameWithAccidentals) {
-        return new String(); // TODO implement
+        String accidentalStr = noteNameWithAccidentals.trim().substring(1);
+        String result = ACCIDENTAL_SEMITONES_MAP.keySet().stream()
+                .filter(e -> !e.equals(NO_ACCIDENTAL))
+                .filter(accidentalStr::contains)
+                .findAny()
+                .orElse(NO_ACCIDENTAL);
+            return result; // TODO test
     }
+
 
     private static String parseNaturalNote(String noteNameWithAccidentals) {
-        return new String(); // TODO implement
+        return noteNameWithAccidentals.trim().substring(0,1); // TODO test
     }
 
-    private static int getSemitonesBetweenNotes(String firstNoteName, String secondNoteName, String intervalNoteOrder) {
-        return 0; // TODO implement
+    /* C D E F G A B
+        mod 12
+        C to E asc => 4
+        C to E desc => 12-4=8
+
+        E to C asc => 12-4 = 8 == C to E desc if second note is smaller bu
+        E to C desc => 4 == C to E asc
+
+        count between and mod if first is smaller desc or first is bigger asc
+     */
+    private static int getSemitonesBetweenNaturalNotes(String firstNoteName,
+                                                       String secondNoteName,
+                                                       String intervalNoteOrder) {
+
+        int firstNoteInd = NOTE_ORDER_LIST.indexOf(firstNoteName);
+        int secondNoteInd = NOTE_ORDER_LIST.indexOf(secondNoteName);
+
+        int maxNoteInd = Math.max(firstNoteInd,secondNoteInd);
+        int minNoteInd = Math.min(firstNoteInd,secondNoteInd);
+        List<String> noteOrderSublist = NOTE_ORDER_LIST.subList(minNoteInd,maxNoteInd+1);
+
+        int semitonesBetween = 0;
+        for (String noteName : noteOrderSublist) {
+            semitonesBetween += NOTE_SEMITONES_TO_NEXT_MAP.get(noteName);
+        }
+
+        // invert
+        if (secondNoteInd < firstNoteInd) {
+            intervalNoteOrder = getInvertedOrder(intervalNoteOrder);
+        }
+
+        if (intervalNoteOrder.equals(ORDER_DESC)) { // mod goes here
+            semitonesBetween = semitonesBetween % TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT;
+        }
+        return semitonesBetween; // TODO test
     }
 
-    private static String getNoteByDegreesToIt(String firstNoteName, int degreeCountToNextNote, String intervalNoteOrder) {
-        return new String(); // TODO implement
+    private static final String getInvertedOrder(String orderStr) {
+        if (orderStr.equals(ORDER_DESC)) {
+            return ORDER_ASC;
+        } else if (orderStr.equals(ORDER_ASC)) {
+            return ORDER_DESC;
+        } else {
+            throw new IllegalArgumentException(INVALID_ORDER_PARAM_EXCEPTION); // TODO test
+        }
+
+    }
+
+    // 1 to 7              C-G desc = P4      1-5      1+4 = 5  7-2 = 5
+    /* C D E F G A B
+        A to C asc expectedInd=0 => indA=5 + degreeCountToNextNote=2 mod 7
+        A to D asc expectedInd=1 => indA=5 + degreeCountToNextNote=3 mod 7
+        A to B asc expectedInd=6 => indA=5 + degreeCountToNextNote=1 mod 7
+        A to F desc expectedInd=3 => indA=5 - degreeCountToNextNote=2 mod 7
+     */
+    private static String getNoteByDegreesToIt(String firstNoteName,
+                                               int degreeCountToNextNote,
+                                               String intervalNoteOrder) {
+
+        if (intervalNoteOrder.equals(ORDER_DESC)) {
+            degreeCountToNextNote = -degreeCountToNextNote;
+        }
+
+        int secondNoteIndex = (NOTE_ORDER_LIST.indexOf(firstNoteName) + degreeCountToNextNote)
+                % NOTE_ORDER_LIST.size();
+        return NOTE_ORDER_LIST.get(secondNoteIndex); // TODO test
     }
 
 
     private static int getDegreeCountFromInterval(String intervalName) {
-        return 0; // TODO implement
+        return INTERVAL_DEGREES_SEMITONES_MAP.get(intervalName)[0]; // TODO test
     }
     private static int getSemitoneCountFromInterval(String intervalName) {
-        return 0; // TODO implement
+        return INTERVAL_DEGREES_SEMITONES_MAP.get(intervalName)[1]; // TODO test
 
     }
 
