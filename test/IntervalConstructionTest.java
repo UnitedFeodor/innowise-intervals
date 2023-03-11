@@ -8,6 +8,8 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 @TestInstance(Lifecycle.PER_CLASS)
 public class IntervalConstructionTest {
 
@@ -36,7 +38,7 @@ public class IntervalConstructionTest {
                 new String[]{"P4", "G#", "dsc"},
                 new String[]{"m3", "B", "dsc"},
                 new String[]{"m2", "Fb", "asc"},
-                new String[]{"M2", "E", "dsc"},
+                new String[]{"M2", "E#", "dsc"},
                 new String[]{"P4", "E", "dsc"},
                 new String[]{"m2", "D#", "asc"},
                 new String[]{"M7", "G", "asc"}
@@ -55,8 +57,6 @@ public class IntervalConstructionTest {
                 "E",
                 "F#"
         );
-
-
     }
 
     @Test
@@ -64,21 +64,34 @@ public class IntervalConstructionTest {
         for (int i = 0; i < inputArraysList.size(); i++) {
             String actualOutput = Intervals.intervalConstruction(inputArraysList.get(i));
             String expectedOutput = exprectedReturnsList.get(i);
-            System.out.println(Arrays.toString(inputArraysList.get(i)) +" actual: "+ actualOutput + " expected: " + expectedOutput);
-            /*
+            //System.out.println(Arrays.toString(inputArraysList.get(i)) +" actual: "+ actualOutput + " expected: " + expectedOutput);
+
             Assertions.assertEquals(
                     expectedOutput,
                     actualOutput,
                     "intervalConstruction for " + Arrays.toString(inputArraysList.get(i))
             );
 
-             */
+
         }
 
     }
 
     @Test
     void intervalConstructionIllegalInput() {
-
+        Assertions.assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(null)),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[1])),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[4])),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[]{"","D"})),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[]{"P4","","asc"})),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[]{"m2","C",""})),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[]{null,null,null})),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[]{"M3",null,null})),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[]{"m6","A",null})),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[]{"that one","A"})),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[]{"M6","H"})),
+                () -> assertThrows(IllegalArgumentException.class, () -> Intervals.intervalConstruction(new String[]{"P5","D","i don't care"}))
+        );
     }
 }
