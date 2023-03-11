@@ -65,7 +65,7 @@ public class Intervals {
     public final static String ORDER_ASC = "asc";
     public final static String ORDER_DSC = "dsc";
 
-    public final static int TOTAL_SEMITONES_IN_AN_OCTAVE_ = 12;
+    public final static int TOTAL_SEMITONES_IN_AN_OCTAVE = 12;
     public final static int TOTAL_DEGREES_IN_AN_OCTAVE = 7;
 
     private final static String NULL_PARAM_EXCEPTION = "Input param is null";
@@ -124,14 +124,58 @@ public class Intervals {
         return secondNoteWithAccidental;
     }
 
-    private static void validateArrLengthAndNullArgs(String[] args) {
-        if (args == null || args[0] == null || args[1] == null || (args.length == 3 && args[2] == null)) {
-            throw new IllegalArgumentException(NULL_PARAM_EXCEPTION);
+    /**
+     * - The function 'intervalIdentification' must take an array of strings as input and return a string.
+     * - An array contains three or two elements.
+     * - The first element is the first note in the interval, the second element is the last note in the interval,
+     * the third indicates whether an interval is ascending or descending.
+     * - If there is no third element in an array, the interval is considered ascending by default.
+     * - The function should return a string - name of the interval.
+     * - Only the following intervals are allowed in a return string:
+     *      m2 M2 m3 M3 P4 P5 m6 M6 m7 M7 P8
+     * - If the interval does not fit a description, an exception should be thrown: "Cannot identify the interval".
+     * - Example: |['C', 'D']| -> |M2|
+     * @param args - [firstNoteNameStr, secondNoteNameStr, (ascOrDescStr)]
+     * @return intervalNameStr
+     */
+    public static String intervalIdentification(String[] args) {
+        validateArrLengthAndNullArgs(args);
+
+        String firstNoteName = parseNaturalNote(args[0]);
+        String firstNoteAccidental = parseAccidental(args[0]);
+
+        String secondNoteName = parseNaturalNote(args[1]);
+        String secondNoteAccidental = parseAccidental(args[1]);
+
+        String intervalNoteOrder = args.length == 3 ? validateNoteOrder(args[2]) : ORDER_ASC;
+
+        if (secondNoteName.equals(firstNoteName)) {
+            return INTERVAL_PERF_8;
         }
-        if (args.length < 2 || args.length > 3) {
-            throw new IllegalArgumentException(INVALID_PARAM_COUNT_EXCEPTION);
+
+        // +1 because an interval is inclusive of all its degrees
+        int degreesBetweenNotes = getDegreeDistanceBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder) + 1;
+        int semitonesBetweenNotes = getSemitoneDistanceBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder);
+
+        int firstNoteAccidentalSemitones = accidentalToSemitones(firstNoteAccidental);
+        int secondNoteAccidentalSemitones = accidentalToSemitones(secondNoteAccidental);
+
+        if (intervalNoteOrder.equals(ORDER_DSC)) {
+            semitonesBetweenNotes = semitonesBetweenNotes + firstNoteAccidentalSemitones - secondNoteAccidentalSemitones;
+        } else {
+            semitonesBetweenNotes = semitonesBetweenNotes - firstNoteAccidentalSemitones + secondNoteAccidentalSemitones;
         }
+
+        Integer[] intervalMapEntry = new Integer[]{degreesBetweenNotes,Math.abs(semitonesBetweenNotes)};
+
+        String intervalName = getKeyByValue(INTERVAL_DEGREES_SEMITONES_MAP,intervalMapEntry);
+        if (intervalName == null) {
+            throw new IllegalArgumentException(INVALID_INTERVAL_DESCRIPTION_EXCEPTION);
+        }
+
+        return intervalName;
     }
+
 
     private static <T, E> T getKeyByValue(Map<T, E> map, E value) {
         for (Map.Entry<T, E> entry : map.entrySet()) {
@@ -175,6 +219,15 @@ public class Intervals {
         return result;
     }
 
+    private static void validateArrLengthAndNullArgs(String[] args) {
+        if (args == null || args[0] == null || args[1] == null || (args.length == 3 && args[2] == null)) {
+            throw new IllegalArgumentException(NULL_PARAM_EXCEPTION);
+        }
+        if (args.length < 2 || args.length > 3) {
+            throw new IllegalArgumentException(INVALID_PARAM_COUNT_EXCEPTION);
+        }
+    }
+
     private static String validateNoteOrder(String noteOrder) {
         if (!noteOrder.equals(ORDER_ASC) && !noteOrder.equals(ORDER_DSC)) {
             throw new IllegalArgumentException(INVALID_ORDER_PARAM_EXCEPTION);
@@ -211,7 +264,7 @@ public class Intervals {
 
         if (noteOrder.equals(ORDER_DSC)) {
             semitonesBetween =
-                    (TOTAL_SEMITONES_IN_AN_OCTAVE_ - semitonesBetween % TOTAL_SEMITONES_IN_AN_OCTAVE_);
+                    (TOTAL_SEMITONES_IN_AN_OCTAVE - semitonesBetween % TOTAL_SEMITONES_IN_AN_OCTAVE);
         }
         return semitonesBetween;
     }
@@ -227,10 +280,7 @@ public class Intervals {
         int minNoteInd = Math.min(firstNoteInd,secondNoteInd);
         List<String> noteOrderSublist = NOTE_ORDER_LIST.subList(minNoteInd,maxNoteInd);
 
-        int degreesBetween = 0;
-        for (String noteName : noteOrderSublist) {
-            degreesBetween++;
-        }
+        int degreesBetween = noteOrderSublist.size();
 
         if (secondNoteInd < firstNoteInd) {
             noteOrder = getInvertedOrder(noteOrder);
@@ -277,55 +327,4 @@ public class Intervals {
 
     }
 
-    /**
-     * - The function 'intervalIdentification' must take an array of strings as input and return a string.
-     * - An array contains three or two elements.
-     * - The first element is the first note in the interval, the second element is the last note in the interval,
-     * the third indicates whether an interval is ascending or descending.
-     * - If there is no third element in an array, the interval is considered ascending by default.
-     * - The function should return a string - name of the interval.
-     * - Only the following intervals are allowed in a return string:
-     *      m2 M2 m3 M3 P4 P5 m6 M6 m7 M7 P8
-     * - If the interval does not fit a description, an exception should be thrown: "Cannot identify the interval".
-     * - Example: |['C', 'D']| -> |M2|
-     * @param args - [$firstNoteNameStr, $secondNoteNameStr, ($ascOrDescStr)]
-     * @return
-     */
-    public static String intervalIdentification(String[] args) {
-        validateArrLengthAndNullArgs(args);
-
-        String firstNoteName = parseNaturalNote(args[0]);
-        String firstNoteAccidental = parseAccidental(args[0]);
-
-        String secondNoteName = parseNaturalNote(args[1]);
-        String secondNoteAccidental = parseAccidental(args[1]);
-
-        String intervalNoteOrder = args.length == 3 ? validateNoteOrder(args[2]) : ORDER_ASC;
-
-        if (secondNoteName.equals(firstNoteName)) {
-            return INTERVAL_PERF_8;
-        }
-
-        int degreesBetweenNotes = getDegreeDistanceBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder)+1;
-        int semitonesBetweenNotes = getSemitoneDistanceBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder);
-
-        int firstNoteAccidentalSemitones = accidentalToSemitones(firstNoteAccidental);
-        int secondNoteAccidentalSemitones = accidentalToSemitones(secondNoteAccidental);
-
-        if (intervalNoteOrder.equals(ORDER_DSC)) {
-            semitonesBetweenNotes = semitonesBetweenNotes + firstNoteAccidentalSemitones - secondNoteAccidentalSemitones;
-        } else {
-            semitonesBetweenNotes = semitonesBetweenNotes - firstNoteAccidentalSemitones + secondNoteAccidentalSemitones;
-
-        }
-
-        Integer[] intervalMapEntry = new Integer[]{degreesBetweenNotes,Math.abs(semitonesBetweenNotes)};
-
-        String intervalName = getKeyByValue(INTERVAL_DEGREES_SEMITONES_MAP,intervalMapEntry);
-        if (intervalName == null) {
-            throw new IllegalArgumentException(INVALID_INTERVAL_DESCRIPTION_EXCEPTION);
-        }
-
-        return intervalName;
-    }
 }
