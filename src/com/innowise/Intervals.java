@@ -63,7 +63,7 @@ public class Intervals {
             Map.entry(ACCIDENTAL_DOUBLE_FLAT,-2)
     );
     public final static String ORDER_ASC = "asc";
-    public final static String ORDER_DESC = "dsc";
+    public final static String ORDER_DSC = "dsc";
 
     public final static int TOTAL_SEMITONES_IN_AN_OCTAVE_ = 12;
     public final static int TOTAL_DEGREES_IN_AN_OCTAVE = 7;
@@ -92,24 +92,13 @@ public class Intervals {
      */
     public static String intervalConstruction(String[] args) {
 
-        if (args == null || args[0] == null || args[1] == null || (args.length == 3 && args[2] == null)) {
-            throw new IllegalArgumentException(NULL_PARAM_EXCEPTION);
-        }
-        if (args.length < 2 || args.length > 3) {
-            throw new IllegalArgumentException(INVALID_PARAM_COUNT_EXCEPTION);
-        }
-        if (!INTERVAL_DEGREES_SEMITONES_MAP.containsKey(args[0])) {
-            throw new IllegalArgumentException(INVALID_INTERVAL_PARAM_EXCEPTION);
-        }
+        validateArrLengthAndNullArgs(args);
+        String intervalName = validateIntervalName(args[0]);
 
-        String intervalName = args[0];
         String firstNoteName = parseNaturalNote(args[1]);
         String firstNoteAccidental = parseAccidental(args[1]);
-        String intervalNoteOrder = args.length == 3 ? args[2] : ORDER_ASC;
 
-        if (!intervalNoteOrder.equals(ORDER_ASC) && !intervalNoteOrder.equals(ORDER_DESC)) {
-            throw new IllegalArgumentException(INVALID_ORDER_PARAM_EXCEPTION);
-        }
+        String intervalNoteOrder = args.length == 3 ? validateNoteOrder(args[2])  : ORDER_ASC;
 
         if (intervalName.equals(INTERVAL_PERF_8)) {
             return firstNoteName;
@@ -123,7 +112,7 @@ public class Intervals {
         int naturalNotesSemitoneDistance = getSemitoneDistanceBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder);
         int firstNoteAccidentalSemitones = accidentalToSemitones(firstNoteAccidental);
 
-        if (intervalNoteOrder.equals(ORDER_DESC)) {
+        if (intervalNoteOrder.equals(ORDER_DSC)) {
             intervalSemitoneDistance = -intervalSemitoneDistance;
             naturalNotesSemitoneDistance = -naturalNotesSemitoneDistance;
         }
@@ -133,6 +122,15 @@ public class Intervals {
 
         String secondNoteWithAccidental = secondNoteName + accidentalNeeded;
         return secondNoteWithAccidental;
+    }
+
+    private static void validateArrLengthAndNullArgs(String[] args) {
+        if (args == null || args[0] == null || args[1] == null || (args.length == 3 && args[2] == null)) {
+            throw new IllegalArgumentException(NULL_PARAM_EXCEPTION);
+        }
+        if (args.length < 2 || args.length > 3) {
+            throw new IllegalArgumentException(INVALID_PARAM_COUNT_EXCEPTION);
+        }
     }
 
     private static <T, E> T getKeyByValue(Map<T, E> map, E value) {
@@ -177,6 +175,20 @@ public class Intervals {
         return result;
     }
 
+    private static String validateNoteOrder(String noteOrder) {
+        if (!noteOrder.equals(ORDER_ASC) && !noteOrder.equals(ORDER_DSC)) {
+            throw new IllegalArgumentException(INVALID_ORDER_PARAM_EXCEPTION);
+        }
+        return noteOrder;
+    }
+
+    private static String validateIntervalName(String intervalName) {
+        if (!INTERVAL_DEGREES_SEMITONES_MAP.containsKey(intervalName)) {
+            throw new IllegalArgumentException(INVALID_INTERVAL_PARAM_EXCEPTION);
+        }
+        return intervalName;
+    }
+
     private static int getSemitoneDistanceBetweenNaturalNotes(String firstNoteName,
                                                               String secondNoteName,
                                                               String noteOrder) {
@@ -197,7 +209,7 @@ public class Intervals {
             noteOrder = getInvertedOrder(noteOrder);
         }
 
-        if (noteOrder.equals(ORDER_DESC)) {
+        if (noteOrder.equals(ORDER_DSC)) {
             semitonesBetween =
                     (TOTAL_SEMITONES_IN_AN_OCTAVE_ - semitonesBetween % TOTAL_SEMITONES_IN_AN_OCTAVE_);
         }
@@ -224,7 +236,7 @@ public class Intervals {
             noteOrder = getInvertedOrder(noteOrder);
         }
 
-        if (noteOrder.equals(ORDER_DESC)) {
+        if (noteOrder.equals(ORDER_DSC)) {
             degreesBetween =
                     (TOTAL_DEGREES_IN_AN_OCTAVE - degreesBetween % TOTAL_DEGREES_IN_AN_OCTAVE);
         }
@@ -232,10 +244,10 @@ public class Intervals {
     }
 
     private static final String getInvertedOrder(String orderStr) {
-        if (orderStr.equals(ORDER_DESC)) {
+        if (orderStr.equals(ORDER_DSC)) {
             return ORDER_ASC;
         } else if (orderStr.equals(ORDER_ASC)) {
-            return ORDER_DESC;
+            return ORDER_DSC;
         } else {
             throw new IllegalArgumentException(INVALID_ORDER_PARAM_EXCEPTION);
         }
@@ -246,7 +258,7 @@ public class Intervals {
                                                         int degreeCountToNextNote,
                                                         String intervalNoteOrder) {
 
-        if (intervalNoteOrder.equals(ORDER_DESC)) {
+        if (intervalNoteOrder.equals(ORDER_DSC)) {
             degreeCountToNextNote = -degreeCountToNextNote;
         }
 
@@ -280,12 +292,7 @@ public class Intervals {
      * @return
      */
     public static String intervalIdentification(String[] args) {
-        if (args == null || args[0] == null || args[1] == null || (args.length == 3 && args[2] == null)) {
-            throw new IllegalArgumentException(NULL_PARAM_EXCEPTION);
-        }
-        if (args.length < 2 || args.length > 3) {
-            throw new IllegalArgumentException(INVALID_PARAM_COUNT_EXCEPTION);
-        }
+        validateArrLengthAndNullArgs(args);
 
         String firstNoteName = parseNaturalNote(args[0]);
         String firstNoteAccidental = parseAccidental(args[0]);
@@ -293,11 +300,7 @@ public class Intervals {
         String secondNoteName = parseNaturalNote(args[1]);
         String secondNoteAccidental = parseAccidental(args[1]);
 
-        String intervalNoteOrder = args.length == 3 ? args[2] : ORDER_ASC;
-
-        if (!intervalNoteOrder.equals(ORDER_ASC) && !intervalNoteOrder.equals(ORDER_DESC)) {
-            throw new IllegalArgumentException(INVALID_ORDER_PARAM_EXCEPTION);
-        }
+        String intervalNoteOrder = args.length == 3 ? validateNoteOrder(args[2]) : ORDER_ASC;
 
         if (secondNoteName.equals(firstNoteName)) {
             return INTERVAL_PERF_8;
@@ -309,7 +312,7 @@ public class Intervals {
         int firstNoteAccidentalSemitones = accidentalToSemitones(firstNoteAccidental);
         int secondNoteAccidentalSemitones = accidentalToSemitones(secondNoteAccidental);
 
-        if (intervalNoteOrder.equals(ORDER_DESC)) {
+        if (intervalNoteOrder.equals(ORDER_DSC)) {
             semitonesBetweenNotes = semitonesBetweenNotes + firstNoteAccidentalSemitones - secondNoteAccidentalSemitones;
         } else {
             semitonesBetweenNotes = semitonesBetweenNotes - firstNoteAccidentalSemitones + secondNoteAccidentalSemitones;
