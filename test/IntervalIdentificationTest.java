@@ -74,12 +74,15 @@ public class IntervalIdentificationTest {
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(null)),
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[1])),
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[4])),
+
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[]{"","D"})),
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[]{INTERVAL_PERF_4,"",ORDER_ASC})),
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[]{INTERVAL_MIN_2,"C",""})),
+
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[]{null,null,null})),
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[]{INTERVAL_MAJ_3,null,null})),
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[]{INTERVAL_MIN_6,"A",null})),
+
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[]{"that one","A"})),
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[]{INTERVAL_MAJ_6,"H"})),
                 () -> assertThrows(IllegalArgumentException.class, () -> intervalConstruction(new String[]{INTERVAL_PERF_5,"D","order"}))
