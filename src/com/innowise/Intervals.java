@@ -53,7 +53,7 @@ public class Intervals {
 
     private final static int TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT = 12;
 
-
+    private final static String NULL_PARAM_EXCEPTION = "Input param is null";
     private final static String INVALID_PARAM_COUNT_EXCEPTION = "Illegal number of elements in input array";
     private final static String INVALID_INTERVAL_PARAM_EXCEPTION = "Illegal interval param in input array";
     private final static String INVALID_NOTE_PARAM_EXCEPTION = "Illegal note param in input array";
@@ -75,6 +75,10 @@ public class Intervals {
      * @return $secondNoteNameStr
      */
     public static String intervalConstruction(String[] args) {
+        if (args == null || args[0] == null || args[1] == null || (args.length == 3 && args[2] == null)) {
+            throw new IllegalArgumentException(NULL_PARAM_EXCEPTION);
+        }
+
         if (args.length < 2 || args.length > 3) {
             throw new IllegalArgumentException(INVALID_PARAM_COUNT_EXCEPTION);
         }
@@ -83,6 +87,7 @@ public class Intervals {
         String firstNoteName = parseNaturalNote(args[1]);
         String firstNoteAccidental = parseAccidental(args[1]);
         String intervalNoteOrder = args.length == 3 ? args[2] : ORDER_ASC;
+
         
         if (!INTERVAL_DEGREES_SEMITONES_MAP.containsKey(intervalName)) {
             throw new IllegalArgumentException(INVALID_INTERVAL_PARAM_EXCEPTION);
@@ -98,16 +103,27 @@ public class Intervals {
         int degreeCountToNextNote = getDegreeCountFromInterval(intervalName) - 1;
         String secondNoteName = getNoteByDegreesToIt(firstNoteName,degreeCountToNextNote,intervalNoteOrder);
         
-        int intervalSemitoneDistance = getAbsoluteSemitoneCountFromInterval(intervalName);
-        /*
+        int intervalSemitoneDistance = getAbsoluteSemitoneCountForInterval(intervalName);
+
+
+        int naturalNotesSemitoneDistance = getAbsoluteSemitoneCountBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder);
+
         if (intervalNoteOrder.equals(ORDER_DESC)) {
-            neededSemitoneCountToNextIntervalNote = -neededSemitoneCountToNextIntervalNote;
-        }*/
-        int naturalNotesSemitoneDistance = getSemitonesBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder);
+            intervalSemitoneDistance = -intervalSemitoneDistance;
+            naturalNotesSemitoneDistance = -naturalNotesSemitoneDistance;
+        }
 
         int firstNoteAccidentalSemitones = accidentalToSemitones(firstNoteAccidental);
-        // TODO fix the formula
-        int semitoneDifference = (intervalSemitoneDistance - naturalNotesSemitoneDistance) + firstNoteAccidentalSemitones;
+        int semitoneDifference = intervalSemitoneDistance - naturalNotesSemitoneDistance + firstNoteAccidentalSemitones;
+        /*
+        if (intervalNoteOrder.equals(ORDER_DESC)) {
+            // -intervalSemitoneDistance + naturalNotesSemitoneDistance + firstNoteAccidentalSemitones
+            semitoneDifference = intervalSemitoneDistance - naturalNotesSemitoneDistance + firstNoteAccidentalSemitones ;
+        } else {
+            // intervalSemitoneDistance - naturalNotesSemitoneDistance + firstNoteAccidentalSemitones
+
+        }
+        */
         /*
         |['P5', 'B', 'asc']|F#|
             B -> F
@@ -173,10 +189,10 @@ public class Intervals {
     }
 
     private static String parseAccidental(String noteNameWithAccidentals) {
-        String accidentalStr = noteNameWithAccidentals.trim().substring(1);
+        String accidentalStr = noteNameWithAccidentals.substring(1);
         String result = ACCIDENTAL_SEMITONES_MAP.keySet().stream()
                 .filter(e -> !e.equals(NO_ACCIDENTAL))
-                .filter(accidentalStr::contains)
+                .filter(accidentalStr::equals)
                 .findAny()
                 .orElse(NO_ACCIDENTAL);
             return result; // TODO test
@@ -184,7 +200,16 @@ public class Intervals {
 
 
     private static String parseNaturalNote(String noteNameWithAccidentals) {
-        return noteNameWithAccidentals.trim().substring(0,1); // TODO test
+        String noteName = noteNameWithAccidentals;
+        if (noteNameWithAccidentals.length() > 1) {
+            noteName = noteNameWithAccidentals.substring(0,1);
+        }
+        String result = NOTE_ORDER_LIST.stream()
+                .filter(noteName::equals)
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException(INVALID_NOTE_PARAM_EXCEPTION));
+
+        return result; // TODO test
     }
 
     /* C D E F G A B
@@ -197,9 +222,9 @@ public class Intervals {
 
         count between and mod if first is smaller desc or first is bigger asc
      */
-    private static int getSemitonesBetweenNaturalNotes(String firstNoteName,
-                                                       String secondNoteName,
-                                                       String intervalNoteOrder) {
+    private static int getAbsoluteSemitoneCountBetweenNaturalNotes(String firstNoteName,
+                                                                   String secondNoteName,
+                                                                   String intervalNoteOrder) {
 
         int firstNoteInd = NOTE_ORDER_LIST.indexOf(firstNoteName);
         int secondNoteInd = NOTE_ORDER_LIST.indexOf(secondNoteName);
@@ -219,7 +244,7 @@ public class Intervals {
         }
 
         if (intervalNoteOrder.equals(ORDER_DESC)) { // mod goes here
-            semitonesBetween = TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT - semitonesBetween % TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT;
+            semitonesBetween = (TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT - semitonesBetween % TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT);
         }
         return semitonesBetween; // TODO test
     }
@@ -261,7 +286,7 @@ public class Intervals {
     private static int getDegreeCountFromInterval(String intervalName) {
         return INTERVAL_DEGREES_SEMITONES_MAP.get(intervalName)[0]; // TODO test
     }
-    private static int getAbsoluteSemitoneCountFromInterval(String intervalName) {
+    private static int getAbsoluteSemitoneCountForInterval(String intervalName) {
         return INTERVAL_DEGREES_SEMITONES_MAP.get(intervalName)[1]; // TODO test
 
     }
