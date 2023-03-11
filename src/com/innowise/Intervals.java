@@ -98,28 +98,50 @@ public class Intervals {
         int degreeCountToNextNote = getDegreeCountFromInterval(intervalName) - 1;
         String secondNoteName = getNoteByDegreesToIt(firstNoteName,degreeCountToNextNote,intervalNoteOrder);
         
-        int neededSemitoneCountToNextIntervalNote = getSemitoneCountFromInterval(intervalName);
-        int semitonesBetweenNaturalNotes = getSemitonesBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder);
+        int intervalSemitoneDistance = getAbsoluteSemitoneCountFromInterval(intervalName);
+        /*
+        if (intervalNoteOrder.equals(ORDER_DESC)) {
+            neededSemitoneCountToNextIntervalNote = -neededSemitoneCountToNextIntervalNote;
+        }*/
+        int naturalNotesSemitoneDistance = getSemitonesBetweenNaturalNotes(firstNoteName,secondNoteName,intervalNoteOrder);
 
         int firstNoteAccidentalSemitones = accidentalToSemitones(firstNoteAccidental);
-        // TODO maybe abs in first difference
-        int semitoneDifference = (semitonesBetweenNaturalNotes - firstNoteAccidentalSemitones) - neededSemitoneCountToNextIntervalNote;
+        // TODO fix the formula
+        int semitoneDifference = (intervalSemitoneDistance - naturalNotesSemitoneDistance) + firstNoteAccidentalSemitones;
         /*
         |['P5', 'B', 'asc']|F#|
             B -> F
             5 degrees but add only 5-1=4
             7 semitones but actually count 6 -> add 1 so #
+            secondAccidental = (naturalCount - (initialAccidental)) - needed
+            secondAccidental = neededSemitoneCountToNextIntervalNote + firstNoteAccidentalSemitones + semitonesBetweenNaturalNotes
+
+            needed - natural + accidental
+
+            -natural + needed + accidental
+            1 =  7 + 0 + -6
 
         |['P4', 'G#', 'dsc']|D#|
             G -> D
             4 degrees but add only 4-1=3
             5 semitones but actually count 5-1(from initial) -> add 1 so #
 
+            -natural + needed + accidental
+            1 = 5 + 1 + -5
+
          |['m2', 'Fb', 'asc']|Gbb|
             F -> G
             2 degrees but only add 2-1=1
             1 semitone but actually count 2+1(from initial) -> remove 2 so bb
+            -natural + needed + accidental
+            -2 = -2 + 1 - 1
 
+           ['m2', 'Bb', 'dsc']|A|
+            -natural + needed - -accidental
+            0 = 2 -1 -1
+
+            ["M3", "Cb", "dsc"]|Abb|
+            -2 = 3 - 4 -1
             needed = (naturalCount - (initialAccidental)) - secondAccidental
             secondAccidental = (naturalCount - (initialAccidental)) - needed
          */
@@ -184,7 +206,7 @@ public class Intervals {
 
         int maxNoteInd = Math.max(firstNoteInd,secondNoteInd);
         int minNoteInd = Math.min(firstNoteInd,secondNoteInd);
-        List<String> noteOrderSublist = NOTE_ORDER_LIST.subList(minNoteInd,maxNoteInd+1);
+        List<String> noteOrderSublist = NOTE_ORDER_LIST.subList(minNoteInd,maxNoteInd);
 
         int semitonesBetween = 0;
         for (String noteName : noteOrderSublist) {
@@ -197,7 +219,7 @@ public class Intervals {
         }
 
         if (intervalNoteOrder.equals(ORDER_DESC)) { // mod goes here
-            semitonesBetween = semitonesBetween % TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT;
+            semitonesBetween = TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT - semitonesBetween % TOTAL_SEMITONES_IN_AN_OCTAVE_COUNT;
         }
         return semitonesBetween; // TODO test
     }
@@ -214,11 +236,13 @@ public class Intervals {
     }
 
     // 1 to 7              C-G desc = P4      1-5      1+4 = 5  7-2 = 5
-    /* C D E F G A B
+    /* C D E F G A B   C D E F G A B
         A to C asc expectedInd=0 => indA=5 + degreeCountToNextNote=2 mod 7
         A to D asc expectedInd=1 => indA=5 + degreeCountToNextNote=3 mod 7
         A to B asc expectedInd=6 => indA=5 + degreeCountToNextNote=1 mod 7
+
         A to F desc expectedInd=3 => indA=5 - degreeCountToNextNote=2 mod 7
+        C to A desc expectedInd=5 => indC=0 - degreeCountToNextNote=2 mod 7
      */
     private static String getNoteByDegreesToIt(String firstNoteName,
                                                int degreeCountToNextNote,
@@ -228,7 +252,7 @@ public class Intervals {
             degreeCountToNextNote = -degreeCountToNextNote;
         }
 
-        int secondNoteIndex = (NOTE_ORDER_LIST.indexOf(firstNoteName) + degreeCountToNextNote)
+        int secondNoteIndex = Math.abs(NOTE_ORDER_LIST.size() + NOTE_ORDER_LIST.indexOf(firstNoteName) + degreeCountToNextNote)
                 % NOTE_ORDER_LIST.size();
         return NOTE_ORDER_LIST.get(secondNoteIndex); // TODO test
     }
@@ -237,7 +261,7 @@ public class Intervals {
     private static int getDegreeCountFromInterval(String intervalName) {
         return INTERVAL_DEGREES_SEMITONES_MAP.get(intervalName)[0]; // TODO test
     }
-    private static int getSemitoneCountFromInterval(String intervalName) {
+    private static int getAbsoluteSemitoneCountFromInterval(String intervalName) {
         return INTERVAL_DEGREES_SEMITONES_MAP.get(intervalName)[1]; // TODO test
 
     }
