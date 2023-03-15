@@ -220,12 +220,17 @@ public class Intervals {
     }
 
     private static void validateArrLengthAndNullArgs(String[] args) {
-        if (args == null || args[0] == null || args[1] == null || (args.length == 3 && args[2] == null)) {
+        if (args == null) {
             throw new IllegalArgumentException(NULL_PARAM_EXCEPTION);
         }
         if (args.length < 2 || args.length > 3) {
             throw new IllegalArgumentException(INVALID_PARAM_COUNT_EXCEPTION);
         }
+
+        if (args[0] == null || args[1] == null || (args.length == 3 && args[2] == null)) {
+            throw new IllegalArgumentException(NULL_PARAM_EXCEPTION);
+        }
+
     }
 
     private static String validateNoteOrder(String noteOrder) {
@@ -241,6 +246,7 @@ public class Intervals {
         }
         return intervalName;
     }
+
 
     private static int getSemitoneDistanceBetweenNaturalNotes(String firstNoteName,
                                                               String secondNoteName,
