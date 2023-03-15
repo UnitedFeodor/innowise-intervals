@@ -120,8 +120,7 @@ public class Intervals {
         int semitoneDifference = intervalSemitoneDistance - naturalNotesSemitoneDistance + firstNoteAccidentalSemitones;
         String accidentalNeeded = semitonesToAccidental(semitoneDifference);
 
-        String secondNoteWithAccidental = secondNoteName + accidentalNeeded;
-        return secondNoteWithAccidental;
+        return secondNoteName + accidentalNeeded;
     }
 
     /**
@@ -197,12 +196,11 @@ public class Intervals {
 
     private static String parseAccidental(String noteNameWithAccidentals) {
         String accidentalStr = noteNameWithAccidentals.substring(1);
-        String result = ACCIDENTAL_SEMITONES_MAP.keySet().stream()
+        return ACCIDENTAL_SEMITONES_MAP.keySet().stream()
                 .filter(e -> !e.equals(ACCIDENTAL_NONE))
                 .filter(accidentalStr::equals)
                 .findAny()
                 .orElse(ACCIDENTAL_NONE);
-            return result;
     }
 
 
@@ -211,12 +209,11 @@ public class Intervals {
         if (noteNameWithAccidentals.length() > 1) {
             noteName = noteNameWithAccidentals.substring(0,1);
         }
-        String result = NOTE_ORDER_LIST.stream()
+
+        return NOTE_ORDER_LIST.stream()
                 .filter(noteName::equals)
                 .findAny()
                 .orElseThrow(() -> new IllegalArgumentException(INVALID_NOTE_PARAM_EXCEPTION));
-
-        return result;
     }
 
     private static void validateArrLengthAndNullArgs(String[] args) {
@@ -278,15 +275,12 @@ public class Intervals {
     private static int getDegreeDistanceBetweenNaturalNotes(String firstNoteName,
                                                               String secondNoteName,
                                                               String noteOrder) {
-
         int firstNoteInd = NOTE_ORDER_LIST.indexOf(firstNoteName);
         int secondNoteInd = NOTE_ORDER_LIST.indexOf(secondNoteName);
 
         int maxNoteInd = Math.max(firstNoteInd,secondNoteInd);
         int minNoteInd = Math.min(firstNoteInd,secondNoteInd);
-        List<String> noteOrderSublist = NOTE_ORDER_LIST.subList(minNoteInd,maxNoteInd);
-
-        int degreesBetween = noteOrderSublist.size();
+        int degreesBetween = maxNoteInd - minNoteInd;
 
         if (secondNoteInd < firstNoteInd) {
             noteOrder = getInvertedOrder(noteOrder);
@@ -299,7 +293,7 @@ public class Intervals {
         return degreesBetween;
     }
 
-    private static final String getInvertedOrder(String orderStr) {
+    private static String getInvertedOrder(String orderStr) {
         if (orderStr.equals(ORDER_DSC)) {
             return ORDER_ASC;
         } else if (orderStr.equals(ORDER_ASC)) {
